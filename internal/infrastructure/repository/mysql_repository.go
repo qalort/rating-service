@@ -58,6 +58,40 @@ func (r *MySQLRepository) CreateUser(ctx context.Context, user *model.User) erro
 	return nil
 }
 
+// GetUserByEmail retrieves a user by their email address
+func (r *MySQLRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+    query := `
+        SELECT id, email, username, created_at, updated_at
+        FROM users
+        WHERE email = ?
+    `
+    
+    var user model.User
+    var userID string
+    
+    err := r.db.QueryRowContext(ctx, query, email).Scan(
+        &userID,
+        &user.Email,
+        &user.Username,
+        &user.CreatedAt,
+        &user.UpdatedAt,
+    )
+    
+    if err == sql.ErrNoRows {
+        return nil, nil
+    }
+    if err != nil {
+        return nil, fmt.Errorf("failed to get user by email: %w", err)
+    }
+    
+    user.ID, err = uuid.Parse(userID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to parse user ID: %w", err)
+    }
+    
+    return &user, nil
+}
+
 // execWithContext executes a query with context and logs errors
 func (r *MySQLRepository) execWithContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error) {
 	r.logger.WithFields(logrus.Fields{
