@@ -89,6 +89,40 @@ func (r *MySQLRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*model
 }
 
 // GetUserByEmail retrieves a user by their email address
+// GetUserByUsername retrieves a user by their username
+func (r *MySQLRepository) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
+    query := `
+        SELECT id, email, username, created_at, updated_at
+        FROM users
+        WHERE username = ?
+    `
+    
+    var user model.User
+    var userID string
+    
+    err := r.db.QueryRowContext(ctx, query, username).Scan(
+        &userID,
+        &user.Email,
+        &user.Username,
+        &user.CreatedAt,
+        &user.UpdatedAt,
+    )
+    
+    if err == sql.ErrNoRows {
+        return nil, nil
+    }
+    if err != nil {
+        return nil, fmt.Errorf("failed to get user by username: %w", err)
+    }
+    
+    user.ID, err = uuid.Parse(userID)
+    if err != nil {
+        return nil, fmt.Errorf("failed to parse user ID: %w", err)
+    }
+    
+    return &user, nil
+}
+
 func (r *MySQLRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
     query := `
         SELECT id, email, username, created_at, updated_at
