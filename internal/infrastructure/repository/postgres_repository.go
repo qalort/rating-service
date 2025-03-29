@@ -591,6 +591,8 @@ func sanitizeSortField(field string) string {
                 "updated_at": true,
                 "title":      true,
                 "content":    true,
+                "username":   true,
+                "email":      true,
         }
 
         // Convert to lowercase and check if allowed
@@ -601,4 +603,120 @@ func sanitizeSortField(field string) string {
 
         // Default to created_at if field is not allowed
         return "created_at"
+}
+
+// CreateUser creates a new user in the database
+func (r *PostgresRepository) CreateUser(ctx context.Context, user *model.User) error {
+        query := `
+                INSERT INTO users (id, username, email, password_hash, created_at, updated_at)
+                VALUES ($1, $2, $3, $4, $5, $6)
+        `
+        _, err := r.execWithContext(
+                ctx,
+                query,
+                user.ID,
+                user.Username,
+                user.Email,
+                user.PasswordHash,
+                user.CreatedAt,
+                user.UpdatedAt,
+        )
+        if err != nil {
+                // Check for unique constraint violation
+                if pqErr, ok := err.(*pq.Error); ok {
+                        if pqErr.Code == "23505" { // unique_violation
+                                // Check which constraint was violated
+                                if strings.Contains(pqErr.Message, "username") {
+                                        return errors.New("username already exists")
+                                }
+                                if strings.Contains(pqErr.Message, "email") {
+                                        return errors.New("email already exists")
+                                }
+                                return errors.New("user already exists")
+                        }
+                }
+                return err
+        }
+        return nil
+}
+
+// GetUserByID retrieves a user by ID
+func (r *PostgresRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
+        query := `
+                SELECT id, username, email, password_hash, created_at, updated_at
+                FROM users
+                WHERE id = $1
+        `
+        row := r.queryRowWithContext(ctx, query, id)
+
+        var user model.User
+        err := row.Scan(
+                &user.ID,
+                &user.Username,
+                &user.Email,
+                &user.PasswordHash,
+                &user.CreatedAt,
+                &user.UpdatedAt,
+        )
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return nil, errors.New("user not found")
+                }
+                return nil, err
+        }
+        return &user, nil
+}
+
+// GetUserByEmail retrieves a user by email
+func (r *PostgresRepository) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+        query := `
+                SELECT id, username, email, password_hash, created_at, updated_at
+                FROM users
+                WHERE email = $1
+        `
+        row := r.queryRowWithContext(ctx, query, email)
+
+        var user model.User
+        err := row.Scan(
+                &user.ID,
+                &user.Username,
+                &user.Email,
+                &user.PasswordHash,
+                &user.CreatedAt,
+                &user.UpdatedAt,
+        )
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return nil, errors.New("user not found")
+                }
+                return nil, err
+        }
+        return &user, nil
+}
+
+// GetUserByUsername retrieves a user by username
+func (r *PostgresRepository) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
+        query := `
+                SELECT id, username, email, password_hash, created_at, updated_at
+                FROM users
+                WHERE username = $1
+        `
+        row := r.queryRowWithContext(ctx, query, username)
+
+        var user model.User
+        err := row.Scan(
+                &user.ID,
+                &user.Username,
+                &user.Email,
+                &user.PasswordHash,
+                &user.CreatedAt,
+                &user.UpdatedAt,
+        )
+        if err != nil {
+                if err == sql.ErrNoRows {
+                        return nil, errors.New("user not found")
+                }
+                return nil, err
+        }
+        return &user, nil
 }

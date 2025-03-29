@@ -65,6 +65,35 @@ func NewParams(page, limit int, sortBy, sortDirection string) Params {
         }
 }
 
+// NewParamsWithOffset creates a new pagination parameters object with direct offset value
+func NewParamsWithOffset(limit, offset int, sortBy, sortDirection string) Params {
+        if limit <= 0 {
+                limit = 10 // Default limit
+        }
+
+        if offset < 0 {
+                offset = 0 // Default offset
+        }
+
+        // Calculate page from offset and limit
+        page := 1
+        if offset > 0 && limit > 0 {
+                page = (offset / limit) + 1
+        }
+
+        // Default sort direction
+        if sortDirection != "asc" && sortDirection != "desc" {
+                sortDirection = "desc"
+        }
+
+        return &PaginationParams{
+                Page:          page,
+                Limit:         limit,
+                SortBy:        sortBy,
+                SortDirection: sortDirection,
+        }
+}
+
 // Pagination is a concrete implementation of pagination
 type Pagination struct {
         Page  int

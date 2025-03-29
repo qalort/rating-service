@@ -1,4 +1,20 @@
--- Create tables for ratings, reviews, and comments
+-- Create tables for users, ratings, reviews, and comments
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id CHAR(36) PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT unique_username UNIQUE (username),
+    CONSTRAINT unique_email UNIQUE (email)
+);
+
+-- Create index for users table
+CREATE INDEX IF NOT EXISTS idx_users_username ON users(username);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 
 -- Create ratings table
 CREATE TABLE IF NOT EXISTS ratings (
@@ -9,7 +25,8 @@ CREATE TABLE IF NOT EXISTS ratings (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT chk_score CHECK (score >= 1 AND score <= 5),
-    CONSTRAINT unique_user_service UNIQUE (user_id, service_id)
+    CONSTRAINT unique_user_service UNIQUE (user_id, service_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create index for service_id for efficient queries
@@ -27,7 +44,8 @@ CREATE TABLE IF NOT EXISTS reviews (
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     CONSTRAINT unique_rating UNIQUE (rating_id),
-    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create indexes for reviews table
@@ -43,7 +61,8 @@ CREATE TABLE IF NOT EXISTS comments (
     content TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
-    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- Create indexes for comments table

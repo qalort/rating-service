@@ -30,7 +30,6 @@ func NewHandler(service port.Service, log *logrus.Logger) *Handler {
 
 // CreateRatingRequest is the request for creating a rating
 type CreateRatingRequest struct {
-        UserID    string `json:"user_id" binding:"required,uuid4"`
         ServiceID string `json:"service_id" binding:"required,uuid4"`
         Score     int    `json:"score" binding:"required,min=1,max=5"`
 }
@@ -44,10 +43,18 @@ func (h *Handler) CreateRating(c *gin.Context) {
                 return
         }
 
-        userID, err := uuid.Parse(req.UserID)
-        if err != nil {
-                h.log.WithError(err).Error("Invalid user ID")
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        // Get authenticated user ID from context
+        userIDVal, exists := c.Get("userID")
+        if !exists {
+                h.log.Error("User ID not found in context")
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+                return
+        }
+        
+        userID, ok := userIDVal.(uuid.UUID)
+        if !ok {
+                h.log.Error("Invalid user ID in context")
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
                 return
         }
 
@@ -117,11 +124,18 @@ func (h *Handler) GetAverageRating(c *gin.Context) {
 
 // GetUserRating handles retrieving a user's rating for a service
 func (h *Handler) GetUserRating(c *gin.Context) {
-        userIDStr := c.Param("userID")
-        userID, err := uuid.Parse(userIDStr)
-        if err != nil {
-                h.log.WithError(err).Error("Invalid user ID")
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        // Get authenticated user ID from context
+        userIDVal, exists := c.Get("userID")
+        if !exists {
+                h.log.Error("User ID not found in context")
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+                return
+        }
+        
+        userID, ok := userIDVal.(uuid.UUID)
+        if !ok {
+                h.log.Error("Invalid user ID in context")
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
                 return
         }
 
@@ -149,7 +163,6 @@ func (h *Handler) GetUserRating(c *gin.Context) {
 
 // CreateReviewRequest is the request for creating a review
 type CreateReviewRequest struct {
-        UserID    string `json:"user_id" binding:"required,uuid4"`
         ServiceID string `json:"service_id" binding:"required,uuid4"`
         RatingID  string `json:"rating_id" binding:"required,uuid4"`
         Title     string `json:"title" binding:"required,min=1,max=255"`
@@ -165,10 +178,18 @@ func (h *Handler) CreateReview(c *gin.Context) {
                 return
         }
 
-        userID, err := uuid.Parse(req.UserID)
-        if err != nil {
-                h.log.WithError(err).Error("Invalid user ID")
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        // Get authenticated user ID from context
+        userIDVal, exists := c.Get("userID")
+        if !exists {
+                h.log.Error("User ID not found in context")
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+                return
+        }
+        
+        userID, ok := userIDVal.(uuid.UUID)
+        if !ok {
+                h.log.Error("Invalid user ID in context")
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
                 return
         }
 
@@ -249,7 +270,6 @@ func (h *Handler) GetReviewsByService(c *gin.Context) {
 
 // CreateCommentRequest is the request for creating a comment
 type CreateCommentRequest struct {
-        UserID   string `json:"user_id" binding:"required,uuid4"`
         ReviewID string `json:"review_id" binding:"required,uuid4"`
         Content  string `json:"content" binding:"required,min=1"`
 }
@@ -263,10 +283,18 @@ func (h *Handler) CreateComment(c *gin.Context) {
                 return
         }
 
-        userID, err := uuid.Parse(req.UserID)
-        if err != nil {
-                h.log.WithError(err).Error("Invalid user ID")
-                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+        // Get authenticated user ID from context
+        userIDVal, exists := c.Get("userID")
+        if !exists {
+                h.log.Error("User ID not found in context")
+                c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication required"})
+                return
+        }
+        
+        userID, ok := userIDVal.(uuid.UUID)
+        if !ok {
+                h.log.Error("Invalid user ID in context")
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
                 return
         }
 
@@ -331,5 +359,5 @@ func extractPaginationParams(c *gin.Context) pagination.Params {
                 offset = 0
         }
 
-        return pagination.NewParams(limit, offset, sortBy, sortDirection)
+        return pagination.NewParamsWithOffset(limit, offset, sortBy, sortDirection)
 }

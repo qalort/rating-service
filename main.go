@@ -6,10 +6,11 @@ import (
 
         "github.com/gin-gonic/gin"
 
-        "rating-system/internal/domain/service"
+        domainService "rating-system/internal/domain/service"
         "rating-system/internal/infrastructure/db"
         "rating-system/internal/infrastructure/handler"
         "rating-system/internal/infrastructure/repository"
+        "rating-system/internal/service"
         "rating-system/pkg/logger"
 )
 
@@ -29,16 +30,23 @@ func main() {
         repo := repository.NewPostgresRepository(dbConn, log)
 
         // Initialize service
-        svc := service.NewRatingService(repo, log)
+        svc := domainService.NewRatingService(repo, log)
+
+        // Initialize authentication service
+        authSvc, err := service.NewAuthService(repo, log)
+        if err != nil {
+                log.WithError(err).Fatal("Failed to initialize auth service")
+        }
 
         // Initialize HTTP handler with Gin
         router := gin.Default()
         router.Use(gin.Recovery())
         router.Use(corsMiddleware())
         
-        // Initialize API handler
+        // Initialize API handlers
         h := handler.NewHandler(svc, log)
-        setupRoutes(router, h)
+        authH := handler.NewAuthHandler(authSvc, log)
+        setupRoutes(router, h, authH)
 
         // Run the server
         port := os.Getenv("PORT")
@@ -52,28 +60,40 @@ func main() {
         }
 }
 
-func setupRoutes(router *gin.Engine, h *handler.Handler) {
+func setupRoutes(router *gin.Engine, h *handler.Handler, authH *handler.AuthHandler) {
         api := router.Group("/api/v1")
         {
-                ratings := api.Group("/ratings")
+                // Auth routes - no authentication required
+                auth := api.Group("/auth")
                 {
-                        ratings.POST("", h.CreateRating)
-                        ratings.GET("/service/:serviceID", h.GetRatingsByService)
-                        ratings.GET("/service/:serviceID/average", h.GetAverageRating)
-                        ratings.GET("/user/:userID/service/:serviceID", h.GetUserRating)
+                        auth.POST("/register", authH.Register)
+                        auth.POST("/login", authH.Login)
                 }
-                
-                reviews := api.Group("/reviews")
+
+                // Protected routes - require authentication
+                secured := api.Group("")
+                secured.Use(authH.AuthMiddleware())
                 {
-                        reviews.POST("", h.CreateReview)
-                        reviews.GET("/service/:serviceID", h.GetReviewsByService)
-                        reviews.GET("/:reviewID", h.GetReviewByID)
-                }
-                
-                comments := api.Group("/comments")
-                {
-                        comments.POST("", h.CreateComment)
-                        comments.GET("/review/:reviewID", h.GetCommentsByReview)
+                        ratings := secured.Group("/ratings")
+                        {
+                                ratings.POST("", h.CreateRating)
+                                ratings.GET("/service/:serviceID", h.GetRatingsByService)
+                                ratings.GET("/service/:serviceID/average", h.GetAverageRating)
+                                ratings.GET("/user/:userID/service/:serviceID", h.GetUserRating)
+                        }
+                        
+                        reviews := secured.Group("/reviews")
+                        {
+                                reviews.POST("", h.CreateReview)
+                                reviews.GET("/service/:serviceID", h.GetReviewsByService)
+                                reviews.GET("/:reviewID", h.GetReviewByID)
+                        }
+                        
+                        comments := secured.Group("/comments")
+                        {
+                                comments.POST("", h.CreateComment)
+                                comments.GET("/review/:reviewID", h.GetCommentsByReview)
+                        }
                 }
         }
 }
