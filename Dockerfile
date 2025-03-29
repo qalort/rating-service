@@ -1,46 +1,43 @@
-# Start from the official Go image
-FROM golang:1.21-alpine as builder
+FROM golang:1.22-alpine AS builder
+
+# Install build dependencies
+RUN apk add --no-cache gcc musl-dev
 
 # Set working directory
 WORKDIR /app
 
-# Install dependencies
-RUN apk add --no-cache git mysql-client
-
-# Copy go.mod and go.sum
-COPY go.mod ./
+# Copy go mod files
+COPY go.mod go.sum ./
 
 # Download dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy source code
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o rating-system .
+RUN CGO_ENABLED=1 GOOS=linux go build -o /app/bin/rating-system .
 
-# Use a minimal alpine image for the final stage
-FROM alpine:3.18
+# Use a smaller image for the runtime
+FROM alpine:3.19
 
-# Install certificates for HTTPS
-RUN apk --no-cache add ca-certificates
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata
 
 # Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+RUN adduser -D -g '' appuser
 
+# Set working directory
 WORKDIR /app
 
 # Copy the binary from the builder stage
-COPY --from=builder /app/rating-system .
-
-# Set the binary to be executable
-RUN chmod +x /app/rating-system
+COPY --from=builder /app/bin/rating-system .
 
 # Use the non-root user
 USER appuser
 
-# Expose the application port
+# Expose the port the app runs on
 EXPOSE 8000
 
-# Run the application
-CMD ["/app/rating-system"]
+# Command to run the application
+CMD ["./rating-system"]

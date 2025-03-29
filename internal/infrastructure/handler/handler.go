@@ -35,6 +35,18 @@ type CreateRatingRequest struct {
 }
 
 // CreateRating handles the creation of a new rating
+// @Summary Create a new rating
+// @Description Create a new rating for a service
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param rating body CreateRatingRequest true "Rating data"
+// @Success 201 {object} model.Rating "Rating created successfully"
+// @Failure 400 {object} map[string]interface{} "Invalid input"
+// @Failure 401 {object} map[string]interface{} "Unauthorized"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/ratings [post]
 func (h *Handler) CreateRating(c *gin.Context) {
         var req CreateRatingRequest
         if err := c.ShouldBindJSON(&req); err != nil {
@@ -76,6 +88,20 @@ func (h *Handler) CreateRating(c *gin.Context) {
 }
 
 // GetRatingsByService handles retrieving ratings for a service
+// @Summary Get ratings for a service
+// @Description Retrieve all ratings for a specific service with pagination
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param serviceID path string true "Service ID" format(uuid)
+// @Param limit query int false "Number of items per page" default(10)
+// @Param offset query int false "Offset for pagination" default(0)
+// @Param sort_by query string false "Field to sort by" default(created_at)
+// @Param sort_direction query string false "Sort direction" Enums(asc, desc) default(desc)
+// @Success 200 {object} map[string]interface{} "List of ratings with pagination metadata"
+// @Failure 400 {object} map[string]interface{} "Invalid service ID"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/ratings/service/{serviceID} [get]
 func (h *Handler) GetRatingsByService(c *gin.Context) {
         serviceIDStr := c.Param("serviceID")
         serviceID, err := uuid.Parse(serviceIDStr)
@@ -103,6 +129,16 @@ func (h *Handler) GetRatingsByService(c *gin.Context) {
 }
 
 // GetAverageRating handles retrieving the average rating for a service
+// @Summary Get average rating for a service
+// @Description Retrieve the average rating score for a specific service
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Param serviceID path string true "Service ID" format(uuid)
+// @Success 200 {object} float64 "Average rating score"
+// @Failure 400 {object} map[string]interface{} "Invalid service ID"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/ratings/service/{serviceID}/average [get]
 func (h *Handler) GetAverageRating(c *gin.Context) {
         serviceIDStr := c.Param("serviceID")
         serviceID, err := uuid.Parse(serviceIDStr)
@@ -123,6 +159,19 @@ func (h *Handler) GetAverageRating(c *gin.Context) {
 }
 
 // GetUserRating handles retrieving a user's rating for a service
+// @Summary Get a user's rating for a service
+// @Description Retrieve the authenticated user's rating for a specific service
+// @Tags ratings
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param serviceID path string true "Service ID" format(uuid)
+// @Success 200 {object} model.Rating "User's rating for the service"
+// @Failure 400 {object} map[string]interface{} "Invalid service ID"
+// @Failure 401 {object} map[string]interface{} "Authentication required"
+// @Failure 404 {object} map[string]interface{} "Rating not found"
+// @Failure 500 {object} map[string]interface{} "Internal server error"
+// @Router /api/v1/ratings/service/{serviceID}/me [get]
 func (h *Handler) GetUserRating(c *gin.Context) {
         // Get authenticated user ID from context
         userIDVal, exists := c.Get("userID")

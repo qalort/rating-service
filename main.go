@@ -5,7 +5,10 @@ import (
         "os"
 
         "github.com/gin-gonic/gin"
+        swaggerFiles "github.com/swaggo/files"
+        ginSwagger "github.com/swaggo/gin-swagger"
 
+        _ "rating-system/docs" // Import generated docs
         domainService "rating-system/internal/domain/service"
         "rating-system/internal/infrastructure/db"
         "rating-system/internal/infrastructure/handler"
@@ -13,6 +16,26 @@ import (
         "rating-system/internal/service"
         "rating-system/pkg/logger"
 )
+
+// @title           Ratings and Reviews API
+// @version         1.0
+// @description     A RESTful API for ratings, reviews, and comments system
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   API Support
+// @contact.url    http://www.example.com/support
+// @contact.email  support@example.com
+
+// @license.name  Apache 2.0
+// @license.url   http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host      localhost:8000
+// @BasePath  /api/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and JWT token
 
 func main() {
         // Initialize logger
@@ -61,6 +84,9 @@ func main() {
 }
 
 func setupRoutes(router *gin.Engine, h *handler.Handler, authH *handler.AuthHandler) {
+        // Swagger documentation endpoint
+        router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+        
         api := router.Group("/api/v1")
         {
                 // Auth routes - no authentication required
@@ -70,6 +96,21 @@ func setupRoutes(router *gin.Engine, h *handler.Handler, authH *handler.AuthHand
                         auth.POST("/login", authH.Login)
                 }
 
+                // Public routes - no authentication required
+                public := api.Group("")
+                {
+                        // Service ratings can be viewed without authentication
+                        public.GET("/ratings/service/:serviceID", h.GetRatingsByService)
+                        public.GET("/ratings/service/:serviceID/average", h.GetAverageRating)
+                        
+                        // Reviews can be viewed without authentication
+                        public.GET("/reviews/service/:serviceID", h.GetReviewsByService)
+                        public.GET("/reviews/:reviewID", h.GetReviewByID)
+                        
+                        // Comments can be viewed without authentication
+                        public.GET("/comments/review/:reviewID", h.GetCommentsByReview)
+                }
+
                 // Protected routes - require authentication
                 secured := api.Group("")
                 secured.Use(authH.AuthMiddleware())
@@ -77,22 +118,17 @@ func setupRoutes(router *gin.Engine, h *handler.Handler, authH *handler.AuthHand
                         ratings := secured.Group("/ratings")
                         {
                                 ratings.POST("", h.CreateRating)
-                                ratings.GET("/service/:serviceID", h.GetRatingsByService)
-                                ratings.GET("/service/:serviceID/average", h.GetAverageRating)
-                                ratings.GET("/user/:userID/service/:serviceID", h.GetUserRating)
+                                ratings.GET("/service/:serviceID/me", h.GetUserRating)
                         }
                         
                         reviews := secured.Group("/reviews")
                         {
                                 reviews.POST("", h.CreateReview)
-                                reviews.GET("/service/:serviceID", h.GetReviewsByService)
-                                reviews.GET("/:reviewID", h.GetReviewByID)
                         }
                         
                         comments := secured.Group("/comments")
                         {
                                 comments.POST("", h.CreateComment)
-                                comments.GET("/review/:reviewID", h.GetCommentsByReview)
                         }
                 }
         }

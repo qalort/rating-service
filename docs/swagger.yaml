@@ -1,0 +1,645 @@
+swagger: "2.0"
+info:
+  description: A RESTful API for ratings, reviews, and comments system
+  title: Ratings and Reviews API
+  termsOfService: http://swagger.io/terms/
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: "1.0"
+host: localhost:8000
+basePath: /api/v1
+paths:
+  /auth/login:
+    post:
+      description: Authenticate a user with email and password
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - auth
+      summary: Login a user
+      parameters:
+      - description: User login credentials
+        name: user
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+          - email
+          - password
+          properties:
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+      responses:
+        "200":
+          description: Login successful
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+              user:
+                type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "401":
+          description: Invalid credentials
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /auth/register:
+    post:
+      description: Register a new user with username, email and password
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - auth
+      summary: Register a new user
+      parameters:
+      - description: User registration data
+        name: user
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+          - username
+          - email
+          - password
+          properties:
+            username:
+              type: string
+            email:
+              type: string
+              format: email
+            password:
+              type: string
+              minLength: 8
+      responses:
+        "201":
+          description: User created successfully
+          schema:
+            type: object
+            properties:
+              token:
+                type: string
+              user:
+                type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "409":
+          description: User already exists
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /ratings:
+    post:
+      security:
+      - BearerAuth: []
+      description: Create a new rating for a service
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - ratings
+      summary: Create a new rating
+      parameters:
+      - description: Rating data
+        name: rating
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+          - service_id
+          - score
+          properties:
+            service_id:
+              type: string
+              format: uuid
+            score:
+              type: integer
+              minimum: 1
+              maximum: 5
+      responses:
+        "201":
+          description: Rating created successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /ratings/service/{serviceID}:
+    get:
+      description: Retrieve all ratings for a specific service with pagination
+      produces:
+      - application/json
+      tags:
+      - ratings
+      summary: Get ratings for a service
+      parameters:
+      - type: string
+        format: uuid
+        description: Service ID
+        name: serviceID
+        in: path
+        required: true
+      - type: integer
+        default: 10
+        description: Number of items per page
+        name: limit
+        in: query
+      - type: integer
+        default: 0
+        description: Offset for pagination
+        name: offset
+        in: query
+      - type: string
+        default: created_at
+        description: Field to sort by
+        name: sort_by
+        in: query
+      - enum:
+        - asc
+        - desc
+        type: string
+        default: desc
+        description: Sort direction
+        name: sort_direction
+        in: query
+      responses:
+        "200":
+          description: List of ratings with pagination metadata
+          schema:
+            type: object
+            properties:
+              ratings:
+                type: array
+                items:
+                  type: object
+              total:
+                type: integer
+              limit:
+                type: integer
+              offset:
+                type: integer
+        "400":
+          description: Invalid service ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /ratings/service/{serviceID}/average:
+    get:
+      description: Retrieve the average rating score for a specific service
+      produces:
+      - application/json
+      tags:
+      - ratings
+      summary: Get average rating for a service
+      parameters:
+      - type: string
+        format: uuid
+        description: Service ID
+        name: serviceID
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Average rating score
+          schema:
+            type: number
+            format: float
+        "400":
+          description: Invalid service ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /ratings/service/{serviceID}/me:
+    get:
+      security:
+      - BearerAuth: []
+      description: Retrieve the authenticated user's rating for a specific service
+      produces:
+      - application/json
+      tags:
+      - ratings
+      summary: Get a user's rating for a service
+      parameters:
+      - type: string
+        format: uuid
+        description: Service ID
+        name: serviceID
+        in: path
+        required: true
+      responses:
+        "200":
+          description: User's rating for the service
+          schema:
+            type: object
+        "400":
+          description: Invalid service ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "401":
+          description: Authentication required
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "404":
+          description: Rating not found
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /reviews:
+    post:
+      security:
+      - BearerAuth: []
+      description: Create a new review with a title and content
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - reviews
+      summary: Create a new review
+      parameters:
+      - description: Review data
+        name: review
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+          - service_id
+          - rating_id
+          - title
+          - content
+          properties:
+            service_id:
+              type: string
+              format: uuid
+            rating_id:
+              type: string
+              format: uuid
+            title:
+              type: string
+              minLength: 1
+              maxLength: 255
+            content:
+              type: string
+              minLength: 1
+      responses:
+        "201":
+          description: Review created successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /reviews/{reviewID}:
+    get:
+      description: Retrieve a review by its ID
+      produces:
+      - application/json
+      tags:
+      - reviews
+      summary: Get a review by ID
+      parameters:
+      - type: string
+        format: uuid
+        description: Review ID
+        name: reviewID
+        in: path
+        required: true
+      responses:
+        "200":
+          description: Review details
+          schema:
+            type: object
+        "400":
+          description: Invalid review ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "404":
+          description: Review not found
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /reviews/service/{serviceID}:
+    get:
+      description: Retrieve all reviews for a specific service with pagination
+      produces:
+      - application/json
+      tags:
+      - reviews
+      summary: Get reviews for a service
+      parameters:
+      - type: string
+        format: uuid
+        description: Service ID
+        name: serviceID
+        in: path
+        required: true
+      - type: integer
+        default: 10
+        description: Number of items per page
+        name: limit
+        in: query
+      - type: integer
+        default: 0
+        description: Offset for pagination
+        name: offset
+        in: query
+      - type: string
+        default: created_at
+        description: Field to sort by
+        name: sort_by
+        in: query
+      - enum:
+        - asc
+        - desc
+        type: string
+        default: desc
+        description: Sort direction
+        name: sort_direction
+        in: query
+      responses:
+        "200":
+          description: List of reviews with pagination metadata
+          schema:
+            type: object
+            properties:
+              reviews:
+                type: array
+                items:
+                  type: object
+              total:
+                type: integer
+              limit:
+                type: integer
+              offset:
+                type: integer
+        "400":
+          description: Invalid service ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /comments:
+    post:
+      security:
+      - BearerAuth: []
+      description: Create a new comment on a review
+      consumes:
+      - application/json
+      produces:
+      - application/json
+      tags:
+      - comments
+      summary: Create a new comment
+      parameters:
+      - description: Comment data
+        name: comment
+        in: body
+        required: true
+        schema:
+          type: object
+          required:
+          - review_id
+          - content
+          properties:
+            review_id:
+              type: string
+              format: uuid
+            content:
+              type: string
+              minLength: 1
+      responses:
+        "201":
+          description: Comment created successfully
+          schema:
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+  /comments/review/{reviewID}:
+    get:
+      description: Retrieve all comments for a specific review with pagination
+      produces:
+      - application/json
+      tags:
+      - comments
+      summary: Get comments for a review
+      parameters:
+      - type: string
+        format: uuid
+        description: Review ID
+        name: reviewID
+        in: path
+        required: true
+      - type: integer
+        default: 10
+        description: Number of items per page
+        name: limit
+        in: query
+      - type: integer
+        default: 0
+        description: Offset for pagination
+        name: offset
+        in: query
+      - type: string
+        default: created_at
+        description: Field to sort by
+        name: sort_by
+        in: query
+      - enum:
+        - asc
+        - desc
+        type: string
+        default: desc
+        description: Sort direction
+        name: sort_direction
+        in: query
+      responses:
+        "200":
+          description: List of comments with pagination metadata
+          schema:
+            type: object
+            properties:
+              comments:
+                type: array
+                items:
+                  type: object
+              total:
+                type: integer
+              limit:
+                type: integer
+              offset:
+                type: integer
+        "400":
+          description: Invalid review ID
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+securityDefinitions:
+  BearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: Type "Bearer" followed by a space and JWT token
