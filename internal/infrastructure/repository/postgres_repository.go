@@ -176,9 +176,10 @@ func (r *PostgresRepository) GetRatingsByService(ctx context.Context, serviceID 
         `
 
         // Add sorting
-        if params.SortBy != "" {
-                baseQuery += fmt.Sprintf(" ORDER BY %s", sanitizeSortField(params.SortBy))
-                if params.SortDirection == "desc" {
+        sortBy := params.GetSortBy()
+        if sortBy != "" {
+                baseQuery += fmt.Sprintf(" ORDER BY %s", sanitizeSortField(sortBy))
+                if params.GetSortDirection() == "desc" {
                         baseQuery += " DESC"
                 } else {
                         baseQuery += " ASC"
@@ -196,8 +197,8 @@ func (r *PostgresRepository) GetRatingsByService(ctx context.Context, serviceID 
                 ctx,
                 baseQuery,
                 serviceID,
-                params.Limit,
-                params.Offset,
+                params.GetLimit(),
+                params.GetOffset(),
         )
         if err != nil {
                 return nil, 0, err
@@ -358,9 +359,9 @@ func (r *PostgresRepository) GetReviewsByService(ctx context.Context, serviceID 
         `
 
         // Add sorting
-        if params.SortBy != "" {
+        if params.GetSortBy() != "" {
                 // Prefix fields with table alias to avoid ambiguity
-                sortField := sanitizeSortField(params.SortBy)
+                sortField := sanitizeSortField(params.GetSortBy())
                 if sortField == "score" {
                         sortField = "rt.score"
                 } else {
@@ -368,7 +369,7 @@ func (r *PostgresRepository) GetReviewsByService(ctx context.Context, serviceID 
                 }
                 
                 baseQuery += fmt.Sprintf(" ORDER BY %s", sortField)
-                if params.SortDirection == "desc" {
+                if params.GetSortDirection() == "desc" {
                         baseQuery += " DESC"
                 } else {
                         baseQuery += " ASC"
@@ -386,8 +387,8 @@ func (r *PostgresRepository) GetReviewsByService(ctx context.Context, serviceID 
                 ctx,
                 baseQuery,
                 serviceID,
-                params.Limit,
-                params.Offset,
+                params.GetLimit(),
+                params.GetOffset(),
         )
         if err != nil {
                 return nil, 0, err
@@ -509,9 +510,9 @@ func (r *PostgresRepository) GetCommentsByReview(ctx context.Context, reviewID u
         `
 
         // Add sorting
-        if params.SortBy != "" {
-                baseQuery += fmt.Sprintf(" ORDER BY %s", sanitizeSortField(params.SortBy))
-                if params.SortDirection == "desc" {
+        if params.GetSortBy() != "" {
+                baseQuery += fmt.Sprintf(" ORDER BY %s", sanitizeSortField(params.GetSortBy()))
+                if params.GetSortDirection() == "desc" {
                         baseQuery += " DESC"
                 } else {
                         baseQuery += " ASC"
@@ -529,8 +530,8 @@ func (r *PostgresRepository) GetCommentsByReview(ctx context.Context, reviewID u
                 ctx,
                 baseQuery,
                 reviewID,
-                params.Limit,
-                params.Offset,
+                params.GetLimit(),
+                params.GetOffset(),
         )
         if err != nil {
                 return nil, 0, err

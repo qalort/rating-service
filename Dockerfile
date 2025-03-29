@@ -5,7 +5,7 @@ FROM golang:1.21-alpine as builder
 WORKDIR /app
 
 # Install dependencies
-RUN apk add --no-cache git
+RUN apk add --no-cache git mysql-client
 
 # Copy go.mod and go.sum
 COPY go.mod ./

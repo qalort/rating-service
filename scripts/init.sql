@@ -2,12 +2,13 @@
 
 -- Create ratings table
 CREATE TABLE IF NOT EXISTS ratings (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    service_id UUID NOT NULL,
-    score INTEGER NOT NULL CHECK (score >= 1 AND score <= 5),
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    service_id CHAR(36) NOT NULL,
+    score INT NOT NULL,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT chk_score CHECK (score >= 1 AND score <= 5),
     CONSTRAINT unique_user_service UNIQUE (user_id, service_id)
 );
 
@@ -17,15 +18,16 @@ CREATE INDEX IF NOT EXISTS idx_ratings_user_id ON ratings(user_id);
 
 -- Create reviews table
 CREATE TABLE IF NOT EXISTS reviews (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    service_id UUID NOT NULL,
-    rating_id UUID NOT NULL REFERENCES ratings(id),
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    service_id CHAR(36) NOT NULL,
+    rating_id CHAR(36) NOT NULL,
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    CONSTRAINT unique_rating UNIQUE (rating_id)
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    CONSTRAINT unique_rating UNIQUE (rating_id),
+    FOREIGN KEY (rating_id) REFERENCES ratings(id) ON DELETE CASCADE
 );
 
 -- Create indexes for reviews table
@@ -35,12 +37,13 @@ CREATE INDEX IF NOT EXISTS idx_reviews_rating_id ON reviews(rating_id);
 
 -- Create comments table
 CREATE TABLE IF NOT EXISTS comments (
-    id UUID PRIMARY KEY,
-    user_id UUID NOT NULL,
-    review_id UUID NOT NULL REFERENCES reviews(id),
+    id CHAR(36) PRIMARY KEY,
+    user_id CHAR(36) NOT NULL,
+    review_id CHAR(36) NOT NULL,
     content TEXT NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL,
+    FOREIGN KEY (review_id) REFERENCES reviews(id) ON DELETE CASCADE
 );
 
 -- Create indexes for comments table
