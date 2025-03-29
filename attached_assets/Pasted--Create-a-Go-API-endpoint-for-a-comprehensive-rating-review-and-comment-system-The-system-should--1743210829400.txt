@@ -1,0 +1,233 @@
+"Create a Go API endpoint for a comprehensive rating, review, and comment system. The system should be designed using hexagonal architecture and be able to integrate with any existing service (e.g., courses, products, services).
+
+
+
+**Core Functionalities:**
+
+
+
+1.  **Submit Rating and Review:**
+
+    * Accept user ratings (e.g., 1-5 stars) and detailed reviews for a specific item/service.
+
+    * Store the rating, review text, user ID, item/service ID, and timestamp in a database.
+
+2.  **Submit Comment:**
+
+    * Allow users to submit comments on reviews.
+
+    * Store the comment text, user ID, review ID, and timestamp in a database.
+
+3.  **Retrieve Ratings, Reviews, and Comments:**
+
+    * Allow retrieving all ratings and reviews for a specific item/service.
+
+    * Allow retrieving a user's ratings and reviews for a specific item/service.
+
+    * Allow retrieving the average rating for a specific item/service.
+
+    * Allow retrieving all comments for a specific review.
+
+4.  **Calculate Average Rating:**
+
+    * Calculate and return the average rating for a given item/service.
+
+5.  **Database Integration:**
+
+    * Use a PostgreSQL database for persistent storage.
+
+    * Implement a database adapter (repository) following hexagonal architecture.
+
+6.  **Hexagonal Architecture:**
+
+    * Structure the application using hexagonal architecture (ports and adapters).
+
+    * Define clear interfaces (ports) for domain logic and external dependencies (database, etc.).
+
+    * Create adapters for database interaction and API handling.
+
+7.  **API Design:**
+
+    * Use a RESTful API with JSON data format.
+
+    * Implement appropriate HTTP methods (POST, GET).
+
+    * Provide clear error handling and response codes.
+
+8.  **Input Validation:**
+
+    * Validate input data (ratings, reviews, comments, item/service IDs, user IDs).
+
+    * Return appropriate error messages for invalid input.
+
+9.  **Error Handling:**
+
+    * Implement robust error handling for database operations and API requests.
+
+    * Return meaningful error messages to the client.
+
+
+
+**Octalysis Integration (Recommendations):**
+
+
+
+1.  **Epic Meaning & Calling (Drive 1):**
+
+    * Show users how their reviews and comments contribute to the community and improve the service.
+
+    * Highlight impactful reviews and comments.
+
+2.  **Development & Accomplishment (Drive 2):**
+
+    * Allow users to track their review history and comment activity.
+
+    * Implement review and comment badges or achievements.
+
+3.  **Empowerment of Creativity & Feedback (Drive 3):**
+
+    * Encourage detailed reviews and comments with formatting options (e.g., markdown).
+
+    * Allow users to edit and update their reviews and comments.
+
+4.  **Ownership & Possession (Drive 4):**
+
+    * Allow users to create lists of their favorite reviewed items/services.
+
+    * Display users’ reviews and comments prominently in their profiles.
+
+5.  **Social Influence & Relatedness (Drive 5):**
+
+    * Show reviews and comments from friends or other users with similar interests.
+
+    * Implement upvoting and downvoting for reviews and comments.
+
+6.  **Scarcity & Impatience (Drive 6):**
+
+    * Consider implementing review and comment deadlines or limited-time windows.
+
+    * Highlight when a review is about to expire or a comment is about to be archived.
+
+7.  **Unpredictability & Curiosity (Drive 7):**
+
+    * Occasionally show random reviews or comments.
+
+    * Provide review and comment insights or statistics that users might find interesting.
+
+8.  **Loss & Avoidance (Drive 8):**
+
+    * Remind users that their reviews and comments help prevent poor service/item quality.
+
+    * Highlight the potential consequences of not reviewing or commenting.
+
+
+
+**Go Implementation Details:**
+
+
+
+* Use Go modules for dependency management.
+
+* Implement the API using the `net/http` package or a Go web framework (e.g., `gin`, `echo`).
+
+* Use the `database/sql` package and the `pq` driver for PostgreSQL interaction.
+
+* Use a Go testing framework (e.g., `testing`) for unit and integration tests.
+
+* Use a logger to log all events and errors.
+
+
+
+Retrieve Ratings, Reviews, and Comments:**
+
+    * Provide an endpoint to fetch all ratings and reviews for a service/item.
+
+    * Return the total number of ratings and calculate the average rating dynamically.
+
+    * Provide an endpoint to get only the average rating of a service.
+
+    * Provide an endpoint to get only reviews for a service. 
+
+
+
+ Hexagonal Architecture (Ports & Adapters):**
+
+    * Separate business logic from the infrastructure.
+
+    * Create domain entities for Rating, Review, and Service.
+
+    * Implement a repository layer (using Supabase's Go client) for persistence.
+
+    * Use service interfaces (ports) for flexibility and testability. 
+
+
+
+ Integration with External Services:**
+
+    * Design the API to integrate with other services like course creation or cohort management.
+
+    * Implement a REST or gRPC adapter to allow other services to fetch ratings and reviews. 
+
+
+
+Security & Performance:**
+
+    * Secure API with JWT authentication (using Supabase Auth).
+
+    * Implement rate limiting to prevent spam.
+
+    * Optimize database queries for fast response times. 
+
+
+
+* Detailed Functionality:**
+
+    * Ensure `service_id` and `user_id` are passed as UUIDs.
+
+    * Implement comment replies for nested conversations.
+
+    * Allow users to upvote/downvote reviews and comments.
+
+    * Implement pagination for retrieving large sets of ratings and reviews.
+
+    * Provide filtering and sorting options for ratings and reviews (e.g., by date, rating score, helpfulness). 
+
+
+
+**Deliverables:**
+
+. Deployment & API Documentation:**
+
+    * Deploy API on Replit using Golang and Supabase.
+
+    * Use Swagger for API documentation.
+
+    * Optionally, deploy a frontend (Next.js) on Vercel to display ratings and reviews. 
+
+* A Go API endpoint for rating, reviewing, and commenting on services/items.
+
+* A database schema for storing ratings, reviews, and comments.
+
+* A clear and well-documented API specification.
+
+* Unit and integration tests.
+
+* A documentation outlining the hexagonal architecture and Octalysis integration.
+
+* A Dockerfile to containerize the application.
+
+
+
+**Important Notes:**
+
+
+
+* Focus on creating a reusable and flexible rating, review, and comment system.
+
+* Prioritize clear, modular, and well-documented code.
+
+* Adhere to Go best practices and coding standards.
+
+* Implement robust error handling and input validation.
+
+* Design the API to be easily integrated with other services."
